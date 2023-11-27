@@ -1,85 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
-	"os"
-	"strings"
-	"unicode/utf8"
+
+	"github.com/perylemke/gowc/cmd"
 )
 
-func countBytes(fileName string) (int, string, error) {
-	fileInfo, err := os.Stat(fileName)
-	if err != nil {
-		return 0, "", err
-	}
-
-	return int(fileInfo.Size()), fileInfo.Name(), nil
-}
-
-func countLines(fileName string) (int, string, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return 0, "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	lines := 0
-	for scanner.Scan() {
-		lines++
-	}
-
-	if err := scanner.Err(); err != nil {
-		return 0, "", err
-	}
-
-	return lines, file.Name(), nil
-}
-
-func countWords(fileName string) (int, string, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return 0, "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	wordCount := 0
-	for scanner.Scan() {
-		words := strings.Fields(scanner.Text())
-		wordCount += len(words)
-	}
-
-	if err := scanner.Err(); err != nil {
-		return 0, "", err
-	}
-
-	return wordCount, file.Name(), nil
-}
-
-func countRunes(fileName string) (int, string, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return 0, "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	runeCount := 0
-	for scanner.Scan() {
-		runeCount += utf8.RuneCountInString(scanner.Text())
-	}
-
-	if err := scanner.Err(); err != nil {
-		return 0, "", err
-	}
-
-	return runeCount, file.Name(), nil
-}
-
 func main() {
+	// Flags
 	bytesFlag := flag.Bool("c", false, "print byte count")
 	linesFlag := flag.Bool("l", false, "print line count")
 	wordsFlag := flag.Bool("w", false, "print word count")
@@ -87,7 +16,7 @@ func main() {
 	flag.Parse()
 
 	if *bytesFlag {
-		size, name, err := countBytes(flag.Arg(0))
+		size, name, err := cmd.CountBytes(flag.Arg(0))
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -96,7 +25,7 @@ func main() {
 	}
 
 	if *linesFlag {
-		lines, name, err := countLines(flag.Arg(0))
+		lines, name, err := cmd.CountLines(flag.Arg(0))
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -105,7 +34,7 @@ func main() {
 	}
 
 	if *wordsFlag {
-		words, name, err := countWords(flag.Arg(0))
+		words, name, err := cmd.CountWords(flag.Arg(0))
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -114,12 +43,33 @@ func main() {
 	}
 
 	if *runeFlag {
-		runes, name, err := countRunes(flag.Arg(0))
+		runes, name, err := cmd.CountRunes(flag.Arg(0))
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 		fmt.Printf("  %d %s\n", runes, name)
+	}
 
+	if !*bytesFlag && !*linesFlag && !*wordsFlag && !*runeFlag {
+		bytes, name, err := cmd.CountBytes(flag.Arg(0))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		lines, _, err := cmd.CountLines(flag.Arg(0))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		words, _, err := cmd.CountWords(flag.Arg(0))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		fmt.Printf("  %d %d %d %s\n", lines, words, bytes, name)
 	}
 }
